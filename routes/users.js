@@ -20,8 +20,12 @@ router.get('/users/:id', (req, res) => {
   } catch (err) {
     res.status(500).send({ message: 'Файл не найден' });
   }
-  res.send(JSON.parse(data).find((item) => item._id === req.params.id));
-  res.status(404).send({ message: 'Нет пользователя с таким id' });
+  const userById = JSON.parse(data).find((item) => item._id === req.params.id);
+  if (userById) {
+    res.send(userById);
+  } else {
+    res.status(404).send({ message: 'Нет пользователя с таким id' });
+  }
 });
 
 module.exports = router;
