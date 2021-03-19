@@ -1,31 +1,16 @@
 const router = require('express').Router();
-const fs = require('fs');
-const path = require('path');
+const express = require('express');
 
-let data = [];
-const usersFilePath = path.resolve('data', 'users.json');
+router.use(express.urlencoded({ extended: false }));
 
-router.get('/users', (req, res) => {
-  try {
-    data = fs.readFileSync(usersFilePath);
-    res.send(JSON.parse(data));
-  } catch (err) {
-    res.status(500).send({ message: 'Файл не найден' });
-  }
-});
+const {
+  getUsers, getUserById, postUsers, patchUserData, patchUserAvatar,
+} = require('../controllers/users');
 
-router.get('/users/:id', (req, res) => {
-  try {
-    data = fs.readFileSync(usersFilePath);
-  } catch (err) {
-    res.status(500).send({ message: 'Файл не найден' });
-  }
-  const userById = JSON.parse(data).find((item) => item._id === req.params.id);
-  if (userById) {
-    res.send(userById);
-  } else {
-    res.status(404).send({ message: 'Нет пользователя с таким id' });
-  }
-});
+router.get('/users', getUsers);
+router.get('/users/:id', getUserById);
+router.post('/users', postUsers);
+router.patch('/users/me', patchUserData);
+router.patch('/users/me/avatar', patchUserAvatar);
 
 module.exports = router;
