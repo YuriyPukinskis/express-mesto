@@ -13,7 +13,6 @@ mongoose.connect('mongodb://localhost:27017/mestodb', {
   useCreateIndex: true,
   useFindAndModify: false,
 });
-app.use(express.static(`${__dirname}/public`));
 app.listen(PORT, () => {
 
 });

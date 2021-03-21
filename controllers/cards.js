@@ -1,16 +1,17 @@
-const fs = require('fs');
-const path = require('path');
 const Card = require('../models/card');
 
-const cardsFilePath = path.resolve('data', 'cards.json');
-
-module.exports.getCards = (req, res) => {
-  try {
-    const data = fs.readFileSync(cardsFilePath);
-    res.send(JSON.parse(data));
-  } catch (err) {
-    res.status(500).send({ message: 'Файл не найден' });
-  }
+module.exports.getCardById = (req, res) => {
+  Card.findById(req.params.cardId)
+    .orFail(new Error('NotValidId'))
+    .then((card) => {
+      res.status(200).send(card);
+    })
+    .catch((err) => {
+      switch (err.message) {
+        case 'NotValidId': res.status(404).send({ message: 'Карточки нет в базе' }); break;
+        default: res.status(500).send({ message: 'Произошла ошибка' }); break;
+      }
+    });
 };
 
 module.exports.postCard = (req, res) => {
@@ -19,13 +20,25 @@ module.exports.postCard = (req, res) => {
 
   Card.create({ name, link, owner })
     .then((card) => res.send({ data: card }))
-    .catch(() => res.status(500).send({ message: 'Произошла ошибка' }));
+    .catch((err) => {
+      switch (err.name) {
+        case 'ValidationError': res.status(400).send({ message: 'Введены некорректные данные' }); break;
+        default: res.status(500).send({ message: 'Произошла ошибка' });
+      }
+    });
 };
 
 module.exports.deleteCard = (req, res) => {
-  Card.findByIdAndRemove(req.params.id)
+  Card.findByIdAndRemove(req.params.cardId)
+    .orFail(new Error('NotValidId'))
     .then((card) => res.send({ data: card }))
-    .catch(() => res.status(500).send({ message: 'Произошла ошибка' }));
+    .catch((err) => {
+      switch (err.name) {
+        case 'CastError': res.status(400).send({ message: 'Переданы некорректные данные' }); break;
+        case 'Error': res.status(404).send({ message: 'Карточки нет в базе' }); break;
+        default: res.status(500).send({ message: 'Произошла ошибка' }); break;
+      }
+    });
 };
 
 module.exports.likeCard = (req, res) => {
@@ -35,14 +48,29 @@ module.exports.likeCard = (req, res) => {
     { new: true },
   )
     .then((card) => res.send({ data: card }))
-    .catch(() => res.status(500).send({ message: 'Произошла ошибка' }));
+    .orFail(new Error('NotValidId'))
+    .catch((err) => {
+      switch (err.name) {
+        case 'CastError': res.status(400).send({ message: 'Переданы некорректные данные' }); break;
+        case 'Error': res.status(404).send({ message: 'Карточки нет в базе' }); break;
+        default: res.status(500).send({ message: 'Произошла ошибка' }); break;
+      }
+    });
 };
 
 module.exports.dislikeCard = (req, res) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $pull: { likes: req.user._id } },
+    { new: true },
   )
+    .orFail(new Error('NotValidId'))
     .then((card) => res.send({ data: card }))
-    .catch(() => res.status(500).send({ message: 'Произошла ошибка' }));
+    .catch((err) => {
+      switch (err.name) {
+        case 'CastError': res.status(400).send({ message: 'Переданы некорректные данные' }); break;
+        case 'Error': res.status(404).send({ message: 'Карточки нет в базе' }); break;
+        default: res.status(500).send({ message: 'Произошла ошибка' }); break;
+      }
+    });
 };

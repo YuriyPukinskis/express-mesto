@@ -15,17 +15,18 @@ module.exports.getUsers = (req, res) => {
 };
 
 module.exports.getUserById = (req, res) => {
-  try {
-    data = fs.readFileSync(usersFilePath);
-  } catch (err) {
-    res.status(500).send({ message: 'Файл не найден' });
-  }
-  const userById = JSON.parse(data).find((item) => item._id === req.params.id);
-  if (userById) {
-    res.send(userById);
-  } else {
-    res.status(404).send({ message: 'Нет пользователя с таким id' });
-  }
+  User.findById(req.params.id)
+    .orFail(new Error('NotValidId'))
+    .then((user) => {
+      res.status(200).send(user);
+    })
+    .catch((err) => {
+      switch (err.name) {
+        case 'CastError': res.status(400).send({ message: 'Переданы некорректные данные' }); break;
+        case 'Error': res.status(404).send({ message: 'Пользователя нет в базе' }); break;
+        default: res.status(500).send({ message: 'Произошла ошибка' }); break;
+      }
+    });
 };
 
 module.exports.postUsers = (req, res) => {
@@ -33,17 +34,38 @@ module.exports.postUsers = (req, res) => {
 
   User.create({ name, about, avatar })
     .then((user) => res.send({ data: user }))
-    .catch(() => res.status(500).send({ message: 'Произошла ошибка' }));
+    .catch((err) => {
+      switch (err.name) {
+        case 'ValidationError': res.status(400).send({ message: 'Введены некорректные данные' }); break;
+        default: res.status(500).send({ message: 'Произошла ошибка' });
+      }
+    });
 };
 
 module.exports.patchUserData = (req, res) => {
-  User.findByIdAndUpdate(req.user._id, { name: req.body.name, about: req.body.about })
+  User.findByIdAndUpdate(req.user._id, { name: req.body.name, about: req.body.about },
+    { new: true, runValidators: true })
+    .orFail(new Error('NotValidId'))
     .then((user) => res.send({ data: user }))
-    .catch(() => res.status(500).send({ message: 'Произошла ошибка' }));
+    .catch((err) => {
+      switch (err.name) {
+        case 'CastError': res.status(400).send({ message: 'Переданы некорректные данные' }); break;
+        case 'Error': res.status(404).send({ message: 'Пользователя нет в базе' }); break;
+        default: res.status(500).send({ message: 'Произошла ошибка' }); break;
+      }
+    });
 };
 
 module.exports.patchUserAvatar = (req, res) => {
-  User.findByIdAndUpdate(req.params.id, { avatar: req.body.avatar })
+  User.findByIdAndUpdate(req.user._id, { avatar: req.body.avatar },
+    { new: true, runValidators: true })
+    .orFail(new Error('NotValidId'))
     .then((user) => res.send({ data: user }))
-    .catch(() => res.status(500).send({ message: 'Произошла ошибка' }));
+    .catch((err) => {
+      switch (err.name) {
+        case 'CastError': res.status(400).send({ message: 'Переданы некорректные данные' }); break;
+        case 'Error': res.status(404).send({ message: 'Пользователя нет в базе' }); break;
+        default: res.status(500).send({ message: 'Произошла ошибка' }); break;
+      }
+    });
 };
