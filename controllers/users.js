@@ -1,17 +1,17 @@
-const fs = require('fs');
-const path = require('path');
 const User = require('../models/user');
 
-let data = [];
-const usersFilePath = path.resolve('data', 'users.json');
-
 module.exports.getUsers = (req, res) => {
-  try {
-    data = fs.readFileSync(usersFilePath);
-    res.send(JSON.parse(data));
-  } catch (err) {
-    res.status(500).send({ message: 'Файл не найден' });
-  }
+  User.find()
+    .orFail(new Error('NotValidId'))
+    .then((card) => {
+      res.status(200).send(card);
+    })
+    .catch((err) => {
+      switch (err.message) {
+        case 'NotValidId': res.status(404).send({ message: 'Пользователей нет в базе' }); break;
+        default: res.status(500).send({ message: 'Произошла ошибка' }); break;
+      }
+    });
 };
 
 module.exports.getUserById = (req, res) => {
