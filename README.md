@@ -5,7 +5,7 @@
 
 
 # Стек
-HTML CSS JavaScript
+JavaScript
 
 # Статус 
 Завершен
