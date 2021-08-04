@@ -8,7 +8,7 @@
 JavaScript
 
 # Инструкция по развёртыванию и системные требования
-HTML5 CSS3 JavaScript1.8 
+JavaScript1.8 
 
 # Статус 
 Завершен
